@@ -6,14 +6,23 @@ class SqliteFunctions < Formula
   version '2010-01-06'
 end
 
+class SqliteDocs < Formula
+  url 'http://www.sqlite.org/sqlite-doc-3071000.zip'
+  sha1 '9957b9f2e955d82b2484cb44cc6fb4a53313d085'
+  version '3.7.10'
+end
+
 class Sqlite < Formula
   homepage 'http://sqlite.org/'
-  url 'http://www.sqlite.org/sqlite-autoconf-3070900.tar.gz'
-  sha1 'a9da98a4bde4d9dae5c29a969455d11a03600e11'
-  version '3.7.9'
+  url 'http://www.sqlite.org/sqlite-autoconf-3071000.tar.gz'
+  sha1 '0442d5a1bff50153039951b09db649864d8af0bb'
+  version '3.7.10'
+
+  depends_on 'readline' => :optional
 
   def options
   [
+    ["--with-docs", "Install HTML documentation"],
     ["--with-rtree", "Enable the R*Tree index module"],
     ["--with-fts", "Enable the FTS Module"],
     ["--universal", "Build a universal binary"],
@@ -45,6 +54,8 @@ class Sqlite < Formula
       system ENV.cc, "-fno-common", "-dynamiclib", "extension-functions.c", "-o", "libsqlitefunctions.dylib", *ENV.cflags.split
       lib.install "libsqlitefunctions.dylib"
     end
+
+    SqliteDocs.new.brew { doc.install Dir['*'] } if ARGV.include? "--with-docs"
   end
 
   if ARGV.include? "--with-functions"
