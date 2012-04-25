@@ -22,7 +22,7 @@ class AndroidSdk < Formula
 
     %w[android apkbuilder ddms dmtracedump draw9patch etc1tool emulator
     hierarchyviewer hprof-conv lint mksdcard monkeyrunner traceview
-    zipalign].each do |tool|
+    zipalign fastboot].each do |tool|
       (bin/tool).write <<-EOS.undent
         #!/bin/sh
         TOOL="#{prefix}/tools/#{tool}"
