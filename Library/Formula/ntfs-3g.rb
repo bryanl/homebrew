@@ -2,8 +2,8 @@ require 'formula'
 
 class Ntfs3g < Formula
   homepage 'http://www.tuxera.com/community/ntfs-3g-download/'
-  url 'http://tuxera.com/opensource/ntfs-3g_ntfsprogs-2012.1.15.tgz'
-  md5 '341acae00a290cab9b00464db65015cc'
+  url 'http://tuxera.com/opensource/ntfs-3g_ntfsprogs-2013.1.13.tgz'
+  sha1 '8c12b7644d90ae9fb8d0aca0d7ebd5f8fac2c818'
 
   depends_on 'pkg-config' => :build
   depends_on 'fuse4x'

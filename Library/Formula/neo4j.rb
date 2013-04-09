@@ -2,9 +2,9 @@ require 'formula'
 
 class Neo4j < Formula
   homepage 'http://neo4j.org'
-  url 'http://dist.neo4j.org/neo4j-community-1.7-unix.tar.gz'
-  version 'community-1.7-unix'
-  md5 '664fc56157a2b1a8fb6e334705494343'
+  url 'http://dist.neo4j.org/neo4j-community-1.8.2-unix.tar.gz'
+  version 'community-1.8.2-unix'
+  sha1 '5e0dcc4339e02fa7f5f2fabb578100bf2060cd16'
 
   def install
     # Remove windows files
@@ -18,6 +18,11 @@ class Neo4j < Formula
 
     # Symlink binaries
     bin.install_symlink Dir["#{libexec}/bin/neo4j{,-shell}"]
+
+    # Adjust UDC props
+    open("#{libexec}/conf/neo4j-wrapper.conf", 'a') { |f|
+      f.puts "wrapper.java.additional.4=-Dneo4j.ext.udc.source=homebrew"
+    }
   end
 
   def caveats; <<-EOS.undent

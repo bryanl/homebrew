@@ -1,11 +1,13 @@
 require 'formula'
 
 class Nss < Formula
-  url 'http://ftp.mozilla.org/pub/mozilla.org/security/nss/releases/NSS_3_12_10_RTM/src/nss-3.12.10.tar.gz'
   homepage 'http://www.mozilla.org/projects/security/pki/nss/'
-  md5 '027954e894f02732f4e66cd854261145'
+  url 'http://ftp.mozilla.org/pub/mozilla.org/security/nss/releases/NSS_3_14_1_RTM/src/nss-3.14.1.tar.gz'
+  sha1 '764773e869aaee314e6f3ca675e04c55075d88a8'
 
   depends_on 'nspr'
+
+  keg_only 'NSS installs a libssl which conflicts with OpenSSL.'
 
   def install
     ENV.deparallelize
@@ -16,9 +18,14 @@ class Nss < Formula
       'NS_USE_GCC=1',
       'NO_MDUPDATE=1',
       'NSS_USE_SYSTEM_SQLITE=1',
-      "NSPR_INCLUDE_DIR=#{HOMEBREW_PREFIX}/include/nspr"
+      "NSPR_INCLUDE_DIR=#{HOMEBREW_PREFIX}/include/nspr",
+      "NSPR_LIB_DIR=#{HOMEBREW_PREFIX}/lib"
     ]
     args << 'USE_64=1' if MacOS.prefer_64_bit?
+
+    # Remove the broken (for anyone but Firefox) install_name
+    inreplace "mozilla/security/coreconf/Darwin.mk", "-install_name @executable_path", "-install_name #{lib}"
+    inreplace "mozilla/security/nss/lib/freebl/config.mk", "@executable_path", lib
 
     system "make", "build_coreconf", "build_dbm", "all", "-C", "mozilla/security/nss", *args
 
@@ -45,30 +52,28 @@ class Nss < Formula
       cp file, lib
     end
 
-    (lib+'pkgconfig/nss.pc').write pkg_file
+    (lib+'pkgconfig/nss.pc').write pc_file
   end
 
-  def test
+  test do
     # See: http://www.mozilla.org/projects/security/pki/nss/tools/certutil.html
-    mktemp do
-      File.open('passwd', 'w') {|f| f.write("It's a secret to everyone.") }
-      system "#{bin}/certutil", "-N", "-d", pwd, "-f", "passwd"
-      system "#{bin}/certutil", "-L", "-d", pwd
-    end
+    File.open('passwd', 'w') {|f| f.write("It's a secret to everyone.") }
+    system "#{bin}/certutil", "-N", "-d", pwd, "-f", "passwd"
+    system "#{bin}/certutil", "-L", "-d", pwd
   end
 
-  def pkg_file; <<-EOF
-prefix=#{HOMEBREW_PREFIX}
-exec_prefix=${prefix}
-libdir=${exec_prefix}/lib
-includedir=${prefix}/include/nss
+  def pc_file; <<-EOS.undent
+    prefix=#{opt_prefix}
+    exec_prefix=${prefix}
+    libdir=${exec_prefix}/lib
+    includedir=${prefix}/include/nss
 
-Name: NSS
-Description: Mozilla Network Security Services
-Version: 3.12.10
-Requires: nspr
-Libs: -L${libdir} -lnss3 -lnssutil3 -lsmime3 -lssl3
-Cflags: -I${includedir}
-EOF
+    Name: NSS
+    Description: Mozilla Network Security Services
+    Version: #{version}
+    Requires: nspr
+    Libs: -L${libdir} -lnss3 -lnssutil3 -lsmime3 -lssl3
+    Cflags: -I${includedir}
+    EOS
   end
 end

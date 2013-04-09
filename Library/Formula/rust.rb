@@ -1,9 +1,9 @@
 require 'formula'
 
 class Rust < Formula
-  url 'http://dl.rust-lang.org/dist/rust-0.2.tar.gz'
   homepage 'http://www.rust-lang.org/'
-  md5 '47be90f952ec01c3088af58be78fd618'
+  url 'http://static.rust-lang.org/dist/rust-0.6.tar.gz'
+  sha256 'e11cb529a1e20f27d99033181a9e0e131817136b46d2742f0fa1afa1210053e5'
 
   fails_with :clang do
     build 318
@@ -11,7 +11,9 @@ class Rust < Formula
   end
 
   def install
-    system "./configure", "--prefix=#{prefix}"
+    args = ["--prefix=#{prefix}"]
+    args << "--enable-clang" if ENV.compiler == :clang
+    system "./configure", *args
     system "make"
     system "make install"
   end

@@ -2,8 +2,8 @@ require 'formula'
 
 class Akka < Formula
   homepage 'http://akka.io/'
-  url 'http://download.akka.io/downloads/akka-2.0.1.zip'
-  md5 '362f9c04176ed89199ae85c6d090ee71'
+  url 'http://download.akka.io/downloads/akka-2.1.2.tgz'
+  sha1 '9810331f2488df142a5f5e6e76b83d5552772aae'
 
   def install
     # Remove Windows files
@@ -14,7 +14,6 @@ class Akka < Formula
       s.gsub! /^declare AKKA_HOME=.*$/, "declare AKKA_HOME=#{libexec}"
     end
 
-    system "chmod +x bin/akka"
     libexec.install Dir["*"]
     bin.install_symlink libexec/"bin/akka"
   end

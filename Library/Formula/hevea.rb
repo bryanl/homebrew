@@ -1,9 +1,9 @@
 require 'formula'
 
 class Hevea < Formula
-  url 'http://hevea.inria.fr/distri/hevea-1.10.tar.gz'
   homepage 'http://hevea.inria.fr/'
-  md5 '24a631570bee3cc4b8350e9db39be62b'
+  url 'http://hevea.inria.fr/distri/hevea-2.04.tar.gz'
+  sha1 'f3d333bea7cda67cd95ca39f0039d82d1f732719'
 
   depends_on 'objective-caml'
   depends_on 'ghostscript' => :optional

@@ -2,19 +2,17 @@ require 'formula'
 
 class Exodriver < Formula
   homepage 'http://labjack.com/support/linux-and-mac-os-x-drivers'
-  url 'https://github.com/labjack/exodriver/tarball/v2.5.0'
-  md5 '85e8782d81ecd49012bbcf51c72d9ef8'
+  url 'https://github.com/labjack/exodriver/archive/v2.5.1.tar.gz'
+  sha1 '7b8508670e3e46a0babdca1c0f38ab63fe1624ff'
 
   head 'https://github.com/labjack/exodriver.git'
 
   depends_on 'libusb'
 
-  def options
-    [["--universal", "Build a universal binary."]]
-  end
+  option :universal
 
   def install
-    ENV.universal_binary if ARGV.build_universal?
+    ENV.universal_binary if build.universal?
 
     cd 'liblabjackusb'
     system "make", "-f", "Makefile",

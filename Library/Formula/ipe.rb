@@ -2,23 +2,41 @@ require 'formula'
 
 class Ipe < Formula
   homepage 'http://ipe7.sourceforge.net'
-  url 'http://sourceforge.net/projects/ipe7/files/ipe/7.1.0/ipe-7.1.2-src.tar.gz'
-  md5 '887f65359d60e184a446cbe77def5176'
+  url 'http://sourceforge.net/projects/ipe7/files/ipe/7.1/ipe-7.1.3-src.tar.gz'
+  sha1 '7999a85d902fbe3952664dea86c2c0a1aaed40d6'
 
   depends_on 'pkg-config' => :build
   depends_on 'makeicns' => :build
   depends_on 'lua'
   depends_on 'qt'
+  depends_on :x11
 
   # configure library paths using pkg-config
   # because ipe assumes that Qt and other libs are installed in
   # some fixed default paths (and homebrew does not agree)
   # reported upstream:
   # https://sourceforge.net/apps/mantisbt/ipe7/view.php?id=105
+
+  # TODO: clean up this patch; upstream doesn't want to carry it.
+  # Also, we will always have pkg-config installed, so we don't need
+  # the patch to handle the case where it isn't.
+  # Recommend we take upstream's recommendation and set ENV vars for
+  # the paths to override those in configure.
+  # @adamv
   def patches; DATA; end
+
+  fails_with :clang do
+    build 318
+    cause <<-EOS.undent
+      IPE should be compiled with the same flags as Qt, which uses LLVM.
+      ipeui_common.cpp:1: error: bad value (native) for -march= switch
+    EOS
+  end
 
   def install
     cd 'src' do
+      system "make", "IPEPREFIX=#{prefix}"
+      ENV.j1 # Parallel install fails
       system "make", "IPEPREFIX=#{prefix}", "install"
     end
   end

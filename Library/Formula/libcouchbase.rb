@@ -2,16 +2,21 @@ require 'formula'
 
 class Libcouchbase < Formula
   homepage 'http://couchbase.com/develop/c/current'
-  url 'http://packages.couchbase.com/clients/c/libcouchbase-1.0.3.tar.gz'
-  md5 '1063f659a50a036e0fb435bbde76da90'
+  url 'http://packages.couchbase.com/clients/c/libcouchbase-2.0.5.tar.gz'
+  sha1 'df09121609d30171001d73e34548ac5669fe551c'
 
-  depends_on 'libevent'
-  depends_on 'libvbucket'
+  option 'with-libev-plugin', 'Build libev IO plugin (will pull libev dependency)'
+  option 'without-libevent-plugin', 'Do not build libevent plugin (will remove libevent dependency)'
+
+  depends_on 'libev' if build.include?('with-libev-plugin')
+  depends_on 'libevent' unless build.include?('without-libevent-plugin')
 
   def install
     system "./configure", "--disable-debug",
                           "--disable-dependency-tracking",
                           "--prefix=#{prefix}",
+                          "--disable-examples",
+                          "--disable-tests", # don't download google-test framework
                           "--disable-couchbasemock"
     system "make install"
   end

@@ -2,11 +2,13 @@ require 'formula'
 
 class Srecord < Formula
   homepage 'http://srecord.sourceforge.net/'
-  url 'http://downloads.sourceforge.net/project/srecord/srecord/1.59/srecord-1.59.tar.gz'
-  md5 '5e01ba19c4f3fb8b5beca47cb46665f2'
+  url 'http://srecord.sourceforge.net/srecord-1.61.tar.gz'
+  sha1 '7d705a1ff389bbfd1279b4f49c80909678cc7847'
 
+  depends_on :libtool
   depends_on 'boost'
   depends_on 'libgcrypt'
+  depends_on 'ghostscript'
 
   def install
     system "./configure", "--prefix=#{prefix}", "LIBTOOL=glibtool"

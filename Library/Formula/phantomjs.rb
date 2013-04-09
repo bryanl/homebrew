@@ -1,9 +1,7 @@
 require 'formula'
 
-class NeedsSnowLeopardOrNewer < Requirement
-  def satisfied?
-    MacOS.snow_leopard?
-  end
+class SnowLeopardOrNewer < Requirement
+  satisfy MacOS.version >= :snow_leopard
 
   def message
     "PhantomJS requires Mac OS X 10.6 (Snow Leopard) or newer."
@@ -11,22 +9,14 @@ class NeedsSnowLeopardOrNewer < Requirement
 end
 
 class Phantomjs < Formula
-  url "http://phantomjs.googlecode.com/files/phantomjs-1.5.0-macosx-static.zip"
   homepage 'http://www.phantomjs.org/'
-  sha1 'b87152ce691e7ed1937d30f86bc706a408d47f64'
+  url 'http://phantomjs.googlecode.com/files/phantomjs-1.9.0-macosx.zip'
+  sha1 '784772eb8d01d26f86e474a410b0f820b6a65a6c'
 
-  depends_on NeedsSnowLeopardOrNewer.new
-
-  def script; <<-EOS.undent
-    #!/bin/sh
-    # phantomjs wrapper script to hide dock icon
-    # See http://code.google.com/p/phantomjs/issues/detail?id=281
-    exec #{libexec}/phantomjs "$@"
-    EOS
-  end
+  depends_on SnowLeopardOrNewer
 
   def install
-    libexec.install ['bin/phantomjs', 'bin/Info.plist']
-    (bin+'phantomjs').write script
+    bin.install 'bin/phantomjs'
+    (share+'phantomjs').install 'examples'
   end
 end

@@ -3,22 +3,20 @@ brew(1) -- The missing package manager for OS X
 
 ## SYNOPSIS
 
-`brew` [--verbose|-v] command [options] [formula] ...  
-`brew` [--version|-v]
+`brew` --version  
+`brew` command [--verbose|-v] [options] [formula] ...
 
 ## DESCRIPTION
 
 Homebrew is the easiest and most flexible way to install the UNIX tools Apple
 didn't include with OS X.
 
-## OPTIONS
-  * `-v`, `--verbose` command [options] [formula] ...:
-    Prints extra, command-specific debugging information.
-    Note that `brew -v` by itself is the same as `brew --version`.
-
 ## ESSENTIAL COMMANDS
 
 For the full command list, see the COMMANDS section.
+
+With `--verbose` or `-v`, many commands print extra debugging information.
+Note that these flags should only appear after a command.
 
   * `install` <formula>:
     Install <formula>.
@@ -65,7 +63,7 @@ For the full command list, see the COMMANDS section.
     versions of formula. Note downloads for any installed formula will still not be
     deleted. If you want to delete those too: `rm -rf $(brew --cache)`
 
-  * `create [--autotools|--cmake] [--no-fetch]` <URL>:
+  * `create [--autotools|--cmake] [--no-fetch] [--set-name <name>] [--set-version <version>]` <URL>:
     Generate a formula for the downloadable file at <URL> and open it in
     `EDITOR`. Homebrew will attempt to automatically derive the formula name
     and version, but if it fails, you'll have to make your own template. The wget
@@ -75,9 +73,12 @@ For the full command list, see the COMMANDS section.
     If `--cmake` is passed, create a basic template for a CMake-style build.
 
     If `--no-fetch` is passed, Homebrew will not download <URL> to the cache and
-    will thus not add the MD5 to the formula for you.
+    will thus not add the SHA-1 to the formula for you.
 
-  * `deps [--1] [-n] [--tree] [--all]` <formula>:
+    The options `--set-name` and `--set-version` each take an argument and allow
+    you to explicitly set the name and version of the package you are creating.
+
+  * `deps [--1] [-n] [--tree] [--all] [--installed]` <formula>:
     Show <formula>'s dependencies.
 
     If `--1` is passed, only show dependencies one level down, instead of
@@ -89,7 +90,9 @@ For the full command list, see the COMMANDS section.
 
     If `--all` is passed, show dependencies for all formulae.
 
-  * `diy [--set-name] [--set-version]`:
+    If `--installed` is passed, show dependencies for all installed formulae.
+
+  * `diy [--set-name <name>] [--set-version <version>]`:
     Automatically determine the installation prefix for non-Homebrew software.
 
     Using the output from this command, you can install your own software into
@@ -110,7 +113,7 @@ For the full command list, see the COMMANDS section.
 
   * `fetch [--force] [-v] [--HEAD] [--deps]` <formulae>:
     Download the source packages for the given <formulae>.
-    For tarballs, also print MD5 and SHA1 checksums.
+    For tarballs, also print SHA1 and SHA-256 checksums.
 
     If `--HEAD` is passed, download the HEAD versions of <formulae> instead. `-v`
     may also be passed to make the VCS checkout verbose, useful for seeing if
@@ -139,14 +142,11 @@ For the full command list, see the COMMANDS section.
   * `info` <URL>:
     Print the name and version that will be detected for <URL>.
 
-  * `install [--force] [--debug] [--ignore-dependencies] [--fresh] [--use-clang] [--use-gcc] [--use-llvm] [--build-from-source] [--devel] [--HEAD]` <formula>:
+  * `install [--debug] [--ignore-dependencies] [--fresh] [--use-clang|--use-gcc|--use-llvm] [--build-from-source] [--devel|--HEAD]` <formula>:
     Install <formula>.
 
     <formula> is usually the name of the formula to install, but it can be specified
     several different ways. See [SPECIFYING FORMULAE][].
-
-    If `--force` is passed, will install <formula> if it exists, even if it
-    is blacklisted.
 
     If `--debug` is passed and brewing fails, open a shell inside the
     temporary directory used for compiling.
@@ -175,8 +175,7 @@ For the full command list, see the COMMANDS section.
     aka master, trunk, unstable.
 
     To install a newer version of HEAD use
-    `brew rm <foo> && brew install --HEAD <foo>`
-    or `brew install --force --HEAD <foo>`.
+    `brew rm <foo> && brew install --HEAD <foo>`.
 
   * `install --interactive [--git]` <formula>:
     Download and patch <formula>, then open a shell. This allows the user to
@@ -186,12 +185,19 @@ For the full command list, see the COMMANDS section.
     If `--git` is passed, Homebrew will create a Git repository, useful for
     creating patches to the software.
 
-  * `ln`, `link` <formula>:
+  * `ln`, `link [--overwrite] [--dry-run]` <formula>:
     Symlink all of <formula>'s installed files into the Homebrew prefix. This
     is done automatically when you install formula, but can be useful for DIY
     installations.
 
-  * `ls, list [--unbrewed] [--versions]` [<formulae>]:
+    If `--overwrite` is passed, Homebrew will delete files which already exist in
+    the prefix while linking.
+
+    If `--dry-run` or `-n` is passed, Homebrew will list all files which would
+    be linked or which would be deleted by `brew link --overwrite`, but will not
+    actually link or delete any files.
+
+  * `ls, list [--unbrewed] [--versions] [--pinned]` [<formulae>]:
     Without any arguments, list all installed formulae.
 
     If <formulae> are given, list the installed files for <formulae>.
@@ -203,6 +209,10 @@ For the full command list, see the COMMANDS section.
 
     If `--versions` is passed, show the version number for installed formulae,
     or only the specified formulae if <formulae> are given.
+
+    If `--pinned` is passed, show the versions of pinned formulae, or only the
+    specified (pinned) formulae if <formulae> are given.
+    See also [`pin`][], [`unpin`][].
 
   * `log [git-log-options]` <formula> ...:
     Show the git log for the given formulae. Options that `git-log`(1)
@@ -229,6 +239,10 @@ For the full command list, see the COMMANDS section.
     If `--quiet` is passed, list only the names of outdated brews. Otherwise,
     the versions are printed as well.
 
+  * `pin` <formulae>:
+    Pin the specified <formulae>, preventing them from being upgraded when
+    issuing the `brew upgrade` command without arguments. See also [`unpin`][].
+
   * `prune`:
     Remove dead symlinks from the Homebrew prefix. This is generally not
     needed, but can be useful when doing DIY installations.
@@ -252,6 +266,11 @@ For the full command list, see the COMMANDS section.
 
     <tap> is of the form <user>/<repo>, e.g. `brew tap homebrew/dupes`.
 
+  * `tap --repair`:
+
+    Ensures all tapped formula are symlinked into Library/Formula and prunes dead
+    formula from Library/Formula.
+
   * `test` <formula>:
     A few formulae provide a test method. `brew test <formula>` runs this
     test method. There is no standard output or return code, but it should
@@ -264,6 +283,10 @@ For the full command list, see the COMMANDS section.
     Unsymlink <formula> from the Homebrew prefix. This can be useful for
     temporarily disabling a formula: `brew unlink foo && commands && brew link foo`.
 
+  * `unpin` <formulae>:
+    Unpin <formulae>, allowing them to be upgraded by `brew upgrade`. See also
+    [`pin`][].
+
   * `untap` <tap>:
     Remove a tapped repository.
 
@@ -274,13 +297,15 @@ For the full command list, see the COMMANDS section.
     If `--rebase` is specified then `git pull --rebase` is used.
 
   * `upgrade` [<formulae>]:
-    Upgrade outdated brews.
+    Upgrade outdated, non-pinned brews.
 
-    If <formulae> are given, upgrade only the specified brews.
+    If <formulae> are given, upgrade only the specified brews (but do so even
+    if they are pinned; see [`pin`][], [`unpin`][]).
 
-  * `uses [--installed]` <formula>:
-    Show the formulas that specify <formula> as a dependency. The list is
-    not recursive; only one level of dependencies is resolved.
+  * `uses [--installed] [--recursive]` <formula>:
+    Show the formulae that specify <formula> as a dependency.
+
+    Use `--recursive` to resolve more than one level of dependencies.
 
     If `--installed` is passed, only list installed formulae.
 
@@ -319,7 +344,7 @@ For the full command list, see the COMMANDS section.
     Display where Homebrew's `.git` directory is located. For standard installs,
     the `prefix` and `repository` are the same directory.
 
-  * `-v`, `--version`:
+  * `--version`:
     Print the version number of brew to standard error and exit.
 
 ## EXTERNAL COMMANDS
@@ -332,7 +357,7 @@ to create your own commands without modifying Homebrew's internals.
 A number of (useful, but unsupported) external commands are included and enabled
 by default:
 
-    $ ls `brew --repository`/Library/Contributions/cmds
+    $ ls `brew --repository`/Library/Contributions/cmd
 
 Documentation for the included external commands as well as instructions for
 creating your own can be found on the wiki:
@@ -358,12 +383,29 @@ can take several different forms:
 
 ## ENVIRONMENT
 
+  * BROWSER:
+    If set, and `HOMEBREW_BROWSER` is not, use `BROWSER` as the web browser
+    when opening project homepages.
+
+  * EDITOR:
+    If set, and `HOMEBREW_EDITOR` is not, use `EDITOR` as the text editor.
+
+  * GIT:
+    When using Git, Homebrew will use `GIT` if set,
+    a Homebrew-built Git if installed, or the system-provided binary.
+
+    Set this to force Homebrew to use a particular git binary.
+
+  * HOMEBREW_BROWSER:
+    If set, uses this setting as the browser when opening project homepages,
+    instead of the OS default browser.
+
   * HOMEBREW\_BUILD\_FROM\_SOURCE:
     If set, instructs Homebrew to compile from source even when a formula
     provides a bottle.
 
   * HOMEBREW\_CACHE:
-    If set, instructs Homebrew to use the give directory as the download cache.
+    If set, instructs Homebrew to use the given directory as the download cache.
     Otherwise, `~/Library/Caches/Homebrew` is used.
 
     This can be used to keep downloads out of your home directory, if you have
@@ -373,8 +415,7 @@ can take several different forms:
     If set, Homebrew will pass `--verbose` when invoking `curl`(1).
 
   * HOMEBREW\_DEBUG:
-    If set, instructs Homebrew to always assume `--debug` when running
-    commands.
+    If set, Homebrew always assumes `--debug` when running commands.
 
   * HOMEBREW\_DEBUG\_INSTALL:
     When `brew install -d` or `brew install -i` drops into a shell,
@@ -385,6 +426,10 @@ can take several different forms:
     When `brew install -d` or `brew install -i` drops into a shell,
     `HOMEBREW_DEBUG_PREFIX` will be set to the target prefix in the Cellar
     of the formula being brewed.
+
+  * HOMEBREW\_DEVELOPER:
+    If set, Homebrew will print warnings that are only relevant to Homebrew
+    developers (active or budding).
 
   * HOMEBREW\_EDITOR:
     If set, Homebrew will use this editor when editing a single formula, or
@@ -407,6 +452,17 @@ can take several different forms:
 
     *Default:* the number of available CPU cores.
 
+  * HOMEBREW\_NO\_EMOJI:
+    If set, Homebrew will not print the beer emoji on a successful build.
+
+    *Note:* Homebrew will only try to print emoji on Lion or newer.
+
+  * HOMEBREW\_SOURCEFORGE\_MIRROR:
+    If set, Homebrew will use the value of `HOMEBREW_SOURCEFORGE_MIRROR` to
+    select a SourceForge mirror for downloading bottles.
+
+    *Example:* `export HOMEBREW_SOURCEFORGE_MIRROR='heanet'`
+
   * HOMEBREW\_SVN:
     When exporting from Subversion, Homebrew will use `HOMEBREW_SVN` if set,
     a Homebrew-built Subversion if installed, or the system-provided binary.
@@ -423,19 +479,16 @@ can take several different forms:
     configurations.
 
   * HOMEBREW\_USE\_CLANG:
-    If set, instructs Homebrew to compile using clang.
+    If set, forces Homebrew to compile using clang.
 
   * HOMEBREW\_USE\_GCC:
-    If set, instructs Homebrew to compile using gcc.
+    If set, forces Homebrew to compile using gcc.
 
   * HOMEBREW\_USE\_LLVM:
-    If set, instructs Homebrew to compile using LLVM.
-
-    *NOTE*: Not all formulae build correctly with LLVM.
+    If set, forces Homebrew to compile using LLVM.
 
   * HOMEBREW\_VERBOSE:
-    If set, instructs Homebrew to always assume `--verbose` when running
-    commands.
+    If set, Homebrew always assumes `--verbose` when running commands.
 
 ## USING HOMEBREW BEHIND A PROXY
 

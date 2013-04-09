@@ -1,6 +1,6 @@
 def blacklisted? name
   case name.downcase
-  when /^vim?$/, 'screen', /^rubygems?$/ then <<-EOS.undent
+  when 'screen', /^rubygems?$/ then <<-EOS.undent
     Apple distributes #{name} with OS X, you can find it in /usr/bin.
     EOS
   when 'libarchive', 'libpcap' then <<-EOS.undent
@@ -16,48 +16,48 @@ def blacklisted? name
     However not all build scripts look for these hard enough, so you may need
     to call ENV.libxml2 in your formula's install function.
     EOS
-  when 'freetype', 'libpng' then <<-EOS.undent
-    Apple distributes #{name} with OS X, you can find it in /usr/X11/lib.
-    However not all build scripts look here, so you may need to call ENV.x11
-    in your formula's install function.
+  when 'wxpython' then <<-EOS.undent
+    The Python bindings (import wx) for wxWidgets are installed by:
+        brew install wxwidgets
     EOS
-  when 'wxwidgets' then <<-EOS.undent
-    An old version of wxWidgets can be found in /usr/X11/lib. However, Homebrew
-    does provide a newer version, 2.8.10:
-
-        brew install wxmac
-    EOS
-  when 'tex', 'tex-live', 'texlive' then <<-EOS.undent
+  when 'tex', 'tex-live', 'texlive', 'latex' then <<-EOS.undent
     Installing TeX from source is weird and gross, requires a lot of patches,
     and only builds 32-bit (and thus can't use Homebrew deps on Snow Leopard.)
 
     We recommend using a MacTeX distribution: http://www.tug.org/mactex/
     EOS
   when 'pip' then <<-EOS.undent
-    Install pip with easy_install:
-
-        easy_install pip
+    pip is installed by `brew install python`
     EOS
   when 'macruby' then <<-EOS.undent
     MacRuby works better when you install their package:
-      http://www.macruby.org/downloads.html
-
-    Although if you prefer, there is a formula in homebrew-alt.
-    EOS
-  when 'npm' then <<-EOS.undent
-    Homebrew does not provide npm because it is self-updating. To install it, first
-    `brew install nodejs' and then:
-
-        curl http://npmjs.org/install.sh | sh
+      http://www.macruby.org/
     EOS
   when /(lib)?lzma/
     "lzma is now part of the xz formula."
   when 'xcode' then <<-EOS.undent
-    Xcode can be installed via the App Store (on Lion), or from:
+    Xcode can be installed via the App Store (on Lion or newer), or from:
       http://connect.apple.com/
+    EOS
+  when 'gtest', 'googletest', 'google-test' then <<-EOS.undent
+    Installing gtest system-wide is not recommended; it should be vendored
+    in your projects that use it.
+    EOS
+  when 'gmock', 'googlemock', 'google-mock' then <<-EOS.undent
+    Installing gmock system-wide is not recommended; it should be vendored
+    in your projects that use it.
+    EOS
+  when 'gcc' then <<-EOS.undent
+    GCC is now maintained in homebrew-versions, with major version
+    number in formula name as suffix. Please tap using:
 
-    If you download from the App Store, make sure you run the installer
-    placed in /Applications after the download completes.
+        brew tap homebrew/versions
+
+    and then install GCC based on its version, e.g., 'brew install gcc47'.
+    EOS
+  when 'sshpass' then <<-EOS.undent
+    We won't add sshpass because it makes it too easy for novice SSH users to
+    ruin SSH's security.
     EOS
   end
 end

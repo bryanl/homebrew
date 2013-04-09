@@ -1,56 +1,126 @@
 require 'formula'
 
+class PythonVersion < Requirement
+  env :userpaths
+
+  satisfy { `python -c 'import sys;print(sys.version[:3])'`.strip.to_f >= 2.6 }
+
+  def message
+    "Node's build system, gyp, requires Python 2.6 or newer."
+  end
+end
+
+class NpmNotInstalled < Requirement
+  fatal true
+
+  def modules_folder
+    "#{HOMEBREW_PREFIX}/lib/node_modules"
+  end
+
+  def message; <<-EOS.undent
+    Beginning with 0.8.0, this recipe now comes with npm.
+    It appears you already have npm installed at #{modules_folder}/npm.
+    To use the npm that comes with this recipe, first uninstall npm with
+    `npm uninstall npm -g`, then run this command again.
+
+    If you would like to keep your installation of npm instead of
+    using the one provided with homebrew, install the formula with
+    the `--without-npm` option.
+    EOS
+  end
+
+  satisfy :build_env => false do
+    begin
+      path = Pathname.new("#{modules_folder}/npm/bin/npm")
+      path.realpath.to_s.include?(HOMEBREW_CELLAR)
+    rescue Errno::ENOENT
+      true
+    end
+  end
+end
+
 class Node < Formula
   homepage 'http://nodejs.org/'
-  url 'http://nodejs.org/dist/v0.6.18/node-v0.6.18.tar.gz'
-  md5 '4a3d3123ccc7b9b21c1990fe074e3d14'
+  url 'http://nodejs.org/dist/v0.10.3/node-v0.10.3.tar.gz'
+  sha1 '4a1feb4ac18ede9e7193921f59fc181c88b1c7ba'
 
   head 'https://github.com/joyent/node.git'
 
-  devel do
-    url 'http://nodejs.org/dist/v0.7.8/node-v0.7.8.tar.gz'
-    md5 '552b1e97539f2d574a2c56b849dea6a5'
-  end
+  option 'enable-debug', 'Build with debugger hooks'
+  option 'without-npm', 'npm will not be installed'
+  option 'with-shared-libs', 'Use Homebrew V8 and system OpenSSL, zlib'
 
-  # Leopard OpenSSL is not new enough, so use our keg-only one
-  depends_on 'openssl' if MacOS.leopard?
+  depends_on NpmNotInstalled unless build.without? 'npm'
+  depends_on PythonVersion
+  depends_on 'v8' if build.with? 'shared-libs'
 
   fails_with :llvm do
     build 2326
   end
 
-  # Stripping breaks dynamic loading
-  skip_clean :all
-
-  def options
-    [["--enable-debug", "Build with debugger hooks."]]
-  end
-
   def install
-    unless ARGV.build_devel?
-      inreplace 'wscript' do |s|
-        s.gsub! '/usr/local', HOMEBREW_PREFIX
-        s.gsub! '/opt/local/lib', '/usr/lib'
-      end
+    # Lie to `xcode-select` for now to work around a GYP bug that affects
+    # CLT-only systems:
+    #
+    #   http://code.google.com/p/gyp/issues/detail?id=292
+    #   joyent/node#3681
+    ENV['DEVELOPER_DIR'] = MacOS.dev_tools_path unless MacOS::Xcode.installed?
+
+    args = %W{--prefix=#{prefix}}
+
+    if build.with? 'shared-libs'
+      args << '--shared-openssl' unless MacOS.version == :leopard
+      args << '--shared-v8'
+      args << '--shared-zlib'
     end
 
-    # Why skip npm install? Read https://github.com/mxcl/homebrew/pull/8784.
-    args = ["--prefix=#{prefix}", "--without-npm"]
-    args << "--debug" if ARGV.include? '--enable-debug'
+    args << "--debug" if build.include? 'enable-debug'
+    args << "--without-npm" if build.include? 'without-npm'
 
     system "./configure", *args
     system "make install"
+
+    unless build.include? 'without-npm'
+      (lib/"node_modules/npm/npmrc").write(npmrc)
+    end
+  end
+
+  def npm_prefix
+    "#{HOMEBREW_PREFIX}/share/npm"
+  end
+
+  def npm_bin
+    "#{npm_prefix}/bin"
+  end
+
+  def modules_folder
+    "#{HOMEBREW_PREFIX}/lib/node_modules"
+  end
+
+  def npmrc
+    <<-EOS.undent
+      prefix = #{npm_prefix}
+    EOS
   end
 
   def caveats
-    <<-EOS.undent
-      Homebrew has NOT installed npm. We recommend the following method of
-      installation:
-        curl http://npmjs.org/install.sh | sh
+    if build.include? 'without-npm'
+      <<-EOS.undent
+        Homebrew has NOT installed npm. We recommend the following method of
+        installation:
+          curl https://npmjs.org/install.sh | sh
 
-      After installing, add the following path to your NODE_PATH environment
-      variable to have npm libraries picked up:
-        #{HOMEBREW_PREFIX}/lib/node_modules
-    EOS
+        After installing, add the following path to your NODE_PATH environment
+        variable to have npm libraries picked up:
+          #{modules_folder}
+      EOS
+    elsif not ENV['PATH'].split(':').include? npm_bin
+      <<-EOS.undent
+        Homebrew installed npm.
+        We recommend prepending the following path to your PATH environment
+        variable to have npm-installed binaries picked up:
+          #{npm_bin}
+      EOS
+    end
   end
 end

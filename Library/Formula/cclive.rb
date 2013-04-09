@@ -1,13 +1,15 @@
 require 'formula'
 
 class Cclive < Formula
-  url 'http://cclive.googlecode.com/files/cclive-0.7.7.tar.bz2'
   homepage 'http://cclive.sourceforge.net/'
-  md5 '666e521bb6fd42fb5178025febbfc3b1'
+  url 'http://sourceforge.net/projects/cclive/files/0.7/cclive-0.7.12.tar.xz'
+  sha1 'e921063f538032cf573793042b097cd35f1722f1'
 
   depends_on 'pkg-config' => :build
+  depends_on 'xz' => :build
   depends_on 'quvi'
   depends_on 'boost'
+  depends_on 'pcre'
 
   # Fix linking against Boost during configure. See:
   # https://trac.macports.org/ticket/29982

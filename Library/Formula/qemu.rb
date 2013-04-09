@@ -2,33 +2,32 @@ require 'formula'
 
 class Qemu < Formula
   homepage 'http://www.qemu.org/'
-  url 'http://wiki.qemu.org/download/qemu-1.0.1.tar.gz'
-  sha1 '4d08b5a83538fcd7b222bec6f1c584da8d12497a'
+  url 'http://wiki.qemu-project.org/download/qemu-1.4.0.tar.bz2'
+  sha1 '4288b23acab1e7f4d9da14cb06b13575a0f7d4f4'
 
+  head 'git://git.qemu-project.org/qemu.git', :using => :git
+
+  depends_on 'pkg-config' => :build
+  depends_on :libtool
   depends_on 'jpeg'
   depends_on 'gnutls'
   depends_on 'glib'
-
-  fails_with :clang do
-    build 318
-  end
-
-  # Borrow these patches from MacPorts
-  def patches
-    { :p0 => [
-      "https://trac.macports.org/export/92470/trunk/dports/emulators/qemu/files/patch-configure.diff",
-      "https://trac.macports.org/export/92470/trunk/dports/emulators/qemu/files/patch-cocoa-uint16-redefined.diff"
-    ]}
-  end
+  depends_on 'pixman'
+  depends_on 'sdl' => :optional
 
   def install
-    system "./configure", "--prefix=#{prefix}",
-                          "--cc=#{ENV.cc}",
-                          "--host-cc=#{ENV.cc}",
-                          "--disable-darwin-user",
-                          "--enable-cocoa",
-                          "--disable-bsd-user",
-                          "--disable-guest-agent"
+    # Disable the sdl backend; use CoreAudio instead.
+    args = %W[
+      --prefix=#{prefix}
+      --cc=#{ENV.cc}
+      --host-cc=#{ENV.cc}
+      --enable-cocoa
+      --disable-bsd-user
+      --disable-guest-agent
+    ]
+    args << (build.with?('sdl') ? '--enable-sdl' : '--disable-sdl')
+    ENV['LIBTOOL'] = 'glibtool'
+    system "./configure", *args
     system "make install"
   end
 end

@@ -1,24 +1,19 @@
 require 'formula'
 
 class Ack < Formula
-  url "https://github.com/petdance/ack/tarball/1.96"
-  md5 '1cce67a811c52f9d51fb1195c97795f1'
   homepage 'http://betterthangrep.com/'
+  url 'https://github.com/petdance/ack/archive/1.96.tar.gz'
+  sha1 '5d53b2b6f285e222a8459730495d6b07c692edd6'
 
   def install
-    system "pod2man ack ack.1"
+    system 'pod2man', 'ack', 'ack.1'
     man1.install 'ack.1'
     bin.install 'ack'
-    (prefix+'etc/bash_completion.d').install 'etc/ack.bash_completion.sh'
-    (share+'zsh/site-functions').install 'etc/ack.zsh_completion' => '_ack'
+    bash_completion.install 'etc/ack.bash_completion.sh'
+    zsh_completion.install 'etc/ack.zsh_completion' => '_ack'
   end
 
-  def caveats; <<-EOS.undent
-    Bash completion has been installed to:
-      #{etc}/bash_completion.d
-
-    zsh completion has been installed to:
-      #{HOMEBREW_PREFIX}/share/zsh/site-functions
-    EOS
+  test do
+    system "#{bin}/ack", 'brew', '/usr/share/dict/words'
   end
 end

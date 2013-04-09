@@ -1,10 +1,16 @@
 require 'formula'
 
 class Znc < Formula
-  url 'http://znc.in/releases/archive/znc-0.204.tar.gz'
-  md5 '7c7247423fc08b0c5c62759a50a9bca3'
   homepage 'http://wiki.znc.in/ZNC'
+  url 'http://znc.in/releases/archive/znc-1.0.tar.gz'
+  sha1 '50e6e3aacb67cf0a63d77f5031d4b75264cee294'
+
   head 'https://github.com/znc/znc.git'
+
+  if build.head?
+    depends_on :automake
+    depends_on :libtool
+  end
 
   depends_on 'pkg-config' => :build
   depends_on 'c-ares' => :optional
@@ -13,20 +19,13 @@ class Znc < Formula
   skip_clean 'bin/znc-config'
   skip_clean 'bin/znc-buildmod'
 
-  if ARGV.build_head? and MacOS.xcode_version >= "4.3"
-    depends_on "automake" => :build
-    depends_on "libtool" => :build
-  end
-
-  def options
-    [['--enable-debug', "Compile ZNC with --enable-debug"]]
-  end
+  option 'enable-debug', "Compile ZNC with --enable-debug"
 
   def install
-    args = ["--prefix=#{prefix}", "--enable-extra"]
-    args << "--enable-debug" if ARGV.include? '--enable-debug'
+    args = ["--prefix=#{prefix}"]
+    args << "--enable-debug" if build.include? 'enable-debug'
 
-    system "./autogen.sh" if ARGV.build_head?
+    system "./autogen.sh" if build.head?
     system "./configure", *args
     system "make install"
   end

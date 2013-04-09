@@ -1,46 +1,78 @@
 require 'formula'
 
 class Mapnik < Formula
-  url 'https://github.com/downloads/mapnik/mapnik/mapnik-v2.0.1.tar.bz2'
-  md5 'e3dd09991340e2568b99f46bac34b0a8'
   homepage 'http://www.mapnik.org/'
-  head 'https://github.com/mapnik/mapnik.git'
+  url 'https://github.com/downloads/mapnik/mapnik/mapnik-v2.1.0.tar.bz2'
+  sha1 'b1c6a138e65a5e20f0f312a559e2ae7185adf5b6'
 
-  depends_on 'pkg-config' => :build
-  depends_on 'libtiff'
-  depends_on 'jpeg'
-  depends_on 'proj'
-  depends_on 'icu4c'
-  depends_on 'boost'
-  depends_on 'cairomm' => :optional
-
-  # Reported upstream: https://github.com/mapnik/mapnik/issues/1171
-  # Fix is not yet in HEAD as of 3 MAY 2012, but likely will be in 2.0.2.
+  # batch for building against boost >1.52
+  # can be removed at Mapnik >= 2.1.1
+  # https://github.com/mapnik/mapnik/issues/1716
   def patches
     DATA
   end
 
-  def install
-    ENV.x11 # for freetype-config
+  head 'https://github.com/mapnik/mapnik.git'
 
-    icu = Formula.factory("icu4c")
+  depends_on 'pkg-config' => :build
+  depends_on :libtool
+  depends_on :freetype
+  depends_on :libpng
+  depends_on 'libtiff'
+  depends_on 'proj'
+  depends_on 'icu4c'
+  depends_on 'jpeg'
+  depends_on 'boost'
+  depends_on 'gdal' => :optional
+  depends_on 'geos' => :optional
+  depends_on 'cairo' => :optional
+
+  if build.with? 'cairo'
+    depends_on 'py2cairo'
+    depends_on 'cairomm'
+  end
+
+  def install
+    icu = Formula.factory("icu4c").opt_prefix
+    boost = Formula.factory('boost').opt_prefix
+    proj = Formula.factory('proj').opt_prefix
+    jpeg = Formula.factory('jpeg').opt_prefix
+    libtiff = Formula.factory('libtiff').opt_prefix
+    cairo = Formula.factory('cairo').opt_prefix if build.with? 'cairo'
+
     # mapnik compiles can take ~1.5 GB per job for some .cpp files
     # so lets be cautious by limiting to CPUS/2
-    jobs = ENV.make_jobs
-    if jobs > 2
-        jobs = Integer(jobs/2)
-    end
+    jobs = ENV.make_jobs.to_i
+    jobs /= 2 if jobs > 2
 
-    system "python",
-           "scons/scons.py",
-           "configure",
-           "CC=\"#{ENV.cc}\"",
-           "CXX=\"#{ENV.cxx}\"",
-           "JOBS=#{jobs}",
-           "PREFIX=#{prefix}",
-           "ICU_INCLUDES=#{icu.include}",
-           "ICU_LIBS=#{icu.lib}",
-           "PYTHON_PREFIX=#{prefix}"  # Install to Homebrew's site-packages
+    args = [ "scons/scons.py",
+             "configure",
+             "CC=\"#{ENV.cc}\"",
+             "CXX=\"#{ENV.cxx}\"",
+             "JOBS=#{jobs}",
+             "PREFIX=#{prefix}",
+             "ICU_INCLUDES=#{icu}/include",
+             "ICU_LIBS=#{icu}/lib",
+             "PYTHON_PREFIX=#{prefix}",  # Install to Homebrew's site-packages
+             "JPEG_INCLUDES=#{jpeg}/include",
+             "JPEG_LIBS=#{jpeg}/lib",
+             "TIFF_INCLUDES=#{libtiff}/include",
+             "TIFF_LIBS=#{libtiff}/lib",
+             "BOOST_INCLUDES=#{boost}/include",
+             "BOOST_LIBS=#{boost}/lib",
+             "PROJ_INCLUDES=#{proj}/include",
+             "PROJ_LIBS=#{proj}/lib" ]
+
+    if build.with? 'cairo'
+      args << "CAIRO=True" # cairo paths will come from pkg-config
+    else
+      args << "CAIRO=False"
+    end
+    args << "GEOS_CONFIG=#{Formula.factory('geos').opt_prefix}/bin/geos-config" if build.with? 'geos'
+    args << "GDAL_CONFIG=#{Formula.factory('gdal').opt_prefix}/bin/gdal-config" if build.with? 'gdal'
+
+    system "python", *args
+
     system "python",
            "scons/scons.py",
            "install"
@@ -58,17 +90,25 @@ class Mapnik < Formula
 end
 
 __END__
---- a/bindings/python/build.py
-+++ b/bindings/python/build.py
-@@ -143,10 +143,7 @@ paths += "__all__ = [mapniklibpath,inputpluginspath,fontscollectionpath]\n"
- if not os.path.exists('mapnik'):
-     os.mkdir('mapnik')
+diff --git a/src/json/feature_collection_parser.cpp b/src/json/feature_collection_parser.cpp
+index 3faeda7..51ad824 100644
+--- a/src/json/feature_collection_parser.cpp
++++ b/src/json/feature_collection_parser.cpp
+@@ -20,12 +20,17 @@
+  *
+  *****************************************************************************/
 
--if hasattr(os.path,'relpath'): # python 2.6 and above
--    file('mapnik/paths.py','w').write(paths % (os.path.relpath(env['MAPNIK_LIB_DIR'],target_path)))
--else:
--    file('mapnik/paths.py','w').write(paths % (env['MAPNIK_LIB_DIR']))
-+file('mapnik/paths.py','w').write(paths % (env['MAPNIK_LIB_DIR']))
++// TODO https://github.com/mapnik/mapnik/issues/1658
++#include <boost/version.hpp>
++#if BOOST_VERSION >= 105200
++#define BOOST_SPIRIT_USE_PHOENIX_V3
++#endif
++
+ // mapnik
+ #include <mapnik/json/feature_collection_parser.hpp>
+ #include <mapnik/json/feature_collection_grammar.hpp>
 
- # force open perms temporarily so that `sudo scons install`
- # does not later break simple non-install non-sudo rebuild
+ // boost
+-#include <boost/version.hpp>
+ #include <boost/spirit/include/qi.hpp>
+ #include <boost/spirit/include/support_multi_pass.hpp>

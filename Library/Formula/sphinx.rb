@@ -10,10 +10,17 @@ end
 
 class Sphinx < Formula
   homepage 'http://www.sphinxsearch.com'
-  url 'http://sphinxsearch.com/files/sphinx-2.0.4-release.tar.gz'
-  md5 '7da4df3df3decb24d8c6fb8f47de1d3d'
+  url 'http://sphinxsearch.com/files/sphinx-2.0.7-release.tar.gz'
+  sha1 '3097fad8aabd03509406456b9b8cce32d38b9a9f'
 
   head 'http://sphinxsearch.googlecode.com/svn/trunk/'
+
+  option 'mysql', 'Force compiling against MySQL'
+  option 'pgsql', 'Force compiling against PostgreSQL'
+  option 'id64',  'Force compiling with 64-bit ID support'
+
+  depends_on :mysql if build.include? 'mysql'
+  depends_on :postgresql if build.include? 'pgsql'
 
   fails_with :llvm do
     build 2334
@@ -21,22 +28,10 @@ class Sphinx < Formula
   end
 
   fails_with :clang do
-    build 318
+    build 421
     cause <<-EOS.undent
-      configure: error: Gcc version error. Minspec is 3.4
-      http://sphinxsearch.com/bugs/view.php?id=1123
-
-      sphinxexpr.cpp:1799:11: error: use of undeclared identifier 'ExprEval'
-      https://github.com/mxcl/homebrew/issues/10016
-      https://github.com/mxcl/homebrew/pull/10698
-      EOS
-  end
-
-  def options
-    [
-      ['--mysql', 'Force compiling against MySQL.'],
-      ['--pgsql', 'Force compiling against PostgreSQL.'],
-    ]
+      sphinxexpr.cpp:1802:11: error: use of undeclared identifier 'ExprEval'
+    EOS
   end
 
   def install
@@ -44,14 +39,18 @@ class Sphinx < Formula
 
     args = %W[--prefix=#{prefix}
               --disable-dependency-tracking
-              --localstatedir=#{var}]
+              --localstatedir=#{var}
+              --with-libstemmer]
 
-    # always build with libstemmer support
-    args << "--with-libstemmer"
+    args << "--enable-id64" if build.include? 'id64'
 
-    # configure script won't auto-select PostgreSQL
-    args << "--with-pgsql" if ARGV.include?('--pgsql') or which 'pg_config'
-    args << "--without-mysql" unless ARGV.include?('--mysql') or which 'mysql_config'
+    %w{mysql pgsql}.each do |db|
+      if build.include? db
+        args << "--with-#{db}"
+      else
+        args << "--without-#{db}"
+      end
+    end
 
     system "./configure", *args
     system "make install"
@@ -77,18 +76,3 @@ class Sphinx < Formula
     EOS
   end
 end
-
-__END__
-diff --git a/configure b/configure
-index aebac75..82d6d05 100755
---- a/configure
-+++ b/configure
-@@ -4361,7 +4361,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
- 
- #ifdef __GNUC__
- #if __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ > 3)
--void main() {}
-+int main() {}
- #else
- syntax error
- #endif

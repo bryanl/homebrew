@@ -1,9 +1,9 @@
 require 'formula'
 
 class Crash < Formula
-  homepage 'http://vietj.github.com/crash/'
-  url 'http://crsh.googlecode.com/files/crsh-1.0.0.tar.gz'
-  md5 '568e43affde5feca3e4c8b20a53fad95'
+  homepage 'http://vietj.github.io/crash/'
+  url 'https://crsh.googlecode.com/files/crsh-all-1.1.0.tar.gz'
+  sha1 'c7a331de9fcf036197b018b509d32322c785cc11'
 
   def install
     libexec.install Dir['crash/*']

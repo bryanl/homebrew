@@ -1,16 +1,20 @@
 require 'formula'
 
 class HtopOsx < Formula
-  url 'https://github.com/max-horvath/htop-osx/tarball/0.8.2.1-2012-04-18'
   homepage 'https://github.com/max-horvath/htop-osx'
-  md5 'c1e91e6afe98ec124dab12f420c855da'
+  url 'https://github.com/max-horvath/htop-osx/archive/0.8.2.1-2013-03-31.tar.gz'
+  sha1 '9c4bbe8517b59ca2ead8fedd4b8b24452f2ec55e'
+  version '0.8.2.1'
 
-  depends_on "automake" => :build if MacOS.xcode_version.to_f >= 4.3
+  depends_on :autoconf
+  depends_on :automake
+  depends_on :libtool
 
   def install
     # Otherwise htop will segfault when resizing the terminal
     ENV.no_optimization if ENV.compiler == :clang
 
+    (buildpath/'m4').mkpath # or autogen fails
     system "./autogen.sh"
     system "./configure", "--disable-dependency-tracking", "--prefix=#{prefix}"
     system "make", "install", "DEFAULT_INCLUDES='-iquote .'"

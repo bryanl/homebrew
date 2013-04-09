@@ -1,13 +1,14 @@
 require 'formula'
 
 class Mongoose < Formula
-  homepage 'http://code.google.com/p/mongoose/'
-  url 'http://mongoose.googlecode.com/files/mongoose-3.1.tgz'
-  md5 'e718fc287b4eb1bd523be3fa00942bb0'
+  homepage 'https://github.com/valenok/mongoose'
+  url 'https://github.com/valenok/mongoose/archive/3.7.tar.gz'
+  sha1 'ca9425456c11fc795515f6987396a5945bf788cd'
 
   def install
-    system "make", "mac", "CC=#{ENV.cc}", "CFLAGS=#{ENV.cflags}"
+    system 'make mac'
     bin.install "mongoose"
-    man1.install "mongoose.1"
+    include.install 'mongoose.h'
+    prefix.install 'examples', 'UserManual.md'
   end
 end

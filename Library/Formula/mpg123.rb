@@ -2,9 +2,9 @@ require 'formula'
 
 class Mpg123 < Formula
   homepage 'http://www.mpg123.de/'
-  url 'http://downloads.sourceforge.net/project/mpg123/mpg123/1.14.2/mpg123-1.14.2.tar.bz2'
-  mirror 'http://www.mpg123.de/download/mpg123-1.14.2.tar.bz2'
-  sha1 '887a453e49e3d49d539a712ee66a8d9da16e3325'
+  url 'http://sourceforge.net/projects/mpg123/files/mpg123/1.15.1/mpg123-1.15.1.tar.bz2'
+  mirror 'http://mpg123.orgis.org/download/mpg123-1.15.1.tar.bz2'
+  sha1 '824003a25f22dde5a03031cb658b6d6a160e8740'
 
   def install
     args = ["--disable-debug", "--disable-dependency-tracking",

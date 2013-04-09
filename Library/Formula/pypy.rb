@@ -1,22 +1,23 @@
 require 'formula'
 
 class Distribute < Formula
-  url 'http://pypi.python.org/packages/source/d/distribute/distribute-0.6.27.tar.gz'
-  md5 'ecd75ea629fee6d59d26f88c39b2d291'
+  url 'http://pypi.python.org/packages/source/d/distribute/distribute-0.6.30.tar.gz'
+  sha1 '40dfce237883d1c02817f726128f61614dc686ff'
 end
 
 class Pypy < Formula
   homepage 'http://pypy.org/'
+  url 'https://bitbucket.org/pypy/pypy/downloads/pypy-1.9-osx64.tar.bz2'
+  version '1.9'
+  sha1 '825e15724419fbdb6fe215eeea044f9181883c90'
 
-  if MacOS.prefer_64_bit?
-    url 'https://bitbucket.org/pypy/pypy/downloads/pypy-1.8-osx64.tar.bz2'
-    version '1.8'
-    md5 '1c293253e8e4df411c3dd59dff82a663'
-  else
-    url 'http://pypy.org/download/pypy-1.4.1-osx.tar.bz2'
-    version '1.4.1'
-    md5 '8584c4e8c042f5b661fcfffa0d9b8a25'
+  devel do
+    url 'https://bitbucket.org/pypy/pypy/downloads/pypy-2.0-beta2-osx64.tar.bz2'
+    version '2.0-beta2'
+    sha1 'ec3d80d7806b0689d9da70ca27c741b1d9cea250'
   end
+
+  depends_on :arch => :x86_64
 
   def install
     rmtree 'site-packages'
@@ -35,7 +36,7 @@ class Pypy < Formula
 
     # Tell distutils-based installers where to put scripts
     scripts_folder.mkpath
-    (prefix+"lib-python/modified-2.7/distutils/distutils.cfg").write <<-EOF.undent
+    (distutils+"distutils.cfg").write <<-EOF.undent
       [install]
       install-scripts=#{scripts_folder}
     EOF
@@ -54,10 +55,9 @@ class Pypy < Formula
     end
   end
 
-  def caveats
-    message = <<-EOS.undent
+  def caveats; <<-EOS.undent
     A "distutils.cfg" has been written to:
-      #{lib}/pypy/distutils
+      #{distutils}
     specifing the install-scripts folder as:
       #{scripts_folder}
 
@@ -72,15 +72,6 @@ class Pypy < Formula
 
     See: https://github.com/mxcl/homebrew/wiki/Homebrew-and-Python
     EOS
-
-    unless MacOS.prefer_64_bit?
-      message += "\n" + <<-EOS.undent
-      Outdated PyPy 1.4.1 is the last version with official 32-bit Mac binary.
-      Consider to build modern version yourself: http://pypy.org/download.html#building-from-source
-      EOS
-    end
-
-    return message
   end
 
   # The HOMEBREW_PREFIX location of site-packages
@@ -91,5 +82,10 @@ class Pypy < Formula
   # Where distribute will install executable scripts
   def scripts_folder
     HOMEBREW_PREFIX+"share/pypy"
+  end
+
+  # The Cellar location of distutils
+  def distutils
+    prefix+"lib-python/2.7/distutils"
   end
 end

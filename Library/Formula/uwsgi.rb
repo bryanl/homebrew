@@ -2,20 +2,15 @@ require 'formula'
 
 class Uwsgi < Formula
   homepage 'http://projects.unbit.it/uwsgi/'
-  url 'http://projects.unbit.it/downloads/uwsgi-1.1.2.tar.gz'
-  md5 '69d2a89e283a047c750dde858a384e25'
+  url 'http://projects.unbit.it/downloads/uwsgi-1.9.5.tar.gz'
+  sha1 '3f37d61ebce10d2ec0380553022f6e6cb05e03d9'
 
-  skip_clean :all # stripping breaks the executable
+  depends_on 'pcre'
+  depends_on 'libyaml'
 
   def install
-    # Find the arch for the Python we are building against.
-    # We remove 'ppc' support, so we can pass Intel-optimized CFLAGS.
-    archs = archs_for_command("python")
-    archs.remove_ppc!
-    arch_flags = archs.as_arch_flags
-
-    ENV.append 'CFLAGS', arch_flags
-    ENV.append 'LDFLAGS', arch_flags
+    arch = MacOS.prefer_64_bit? ? 'x86_64' : 'i386'
+    %w{CFLAGS LDFLAGS}.each { |e| ENV.append e, "-arch #{arch}" }
 
     system "python", "uwsgiconfig.py", "--build"
     bin.install "uwsgi"

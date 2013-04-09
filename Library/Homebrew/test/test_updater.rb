@@ -1,13 +1,9 @@
 abort if ARGV.include? "--skip-update"
 
 require 'testing_env'
-
-require 'extend/ARGV' # needs to be after test/unit to avoid conflict with OptionsParser
-ARGV.extend(HomebrewArgvExtension)
-
 require 'formula'
-require 'utils'
 require 'cmd/update'
+require 'yaml'
 
 class UpdaterMock < Updater
   def in_repo_expect(cmd, output = '')
@@ -41,11 +37,11 @@ class UpdaterTests < Test::Unit::TestCase
   end
 
   def self.fixture_data
-    unless @fixture_data
-      require 'yaml'
-      @fixture_data = YAML.load_file(Pathname.new(ABS__FILE__).parent.realpath + 'fixtures/updater_fixture.yaml')
-    end
-    @fixture_data
+    @fixture_data ||= load_fixture_data
+  end
+
+  def self.load_fixture_data
+    YAML.load_file(Pathname.new(ABS__FILE__).parent.realpath + 'fixtures/updater_fixture.yaml')
   end
 
   def test_update_homebrew_without_any_changes
@@ -87,7 +83,7 @@ class UpdaterTests < Test::Unit::TestCase
       assert report.select_formula(:R).empty?
     end
   end
-  
+
   def test_update_homebrew_with_formulae_changes
     diff_output = fixture('update_git_diff_output_with_formulae_changes')
 

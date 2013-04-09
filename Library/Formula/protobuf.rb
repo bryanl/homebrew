@@ -2,15 +2,13 @@ require 'formula'
 
 class Protobuf < Formula
   homepage 'http://code.google.com/p/protobuf/'
-  url 'http://protobuf.googlecode.com/files/protobuf-2.4.1.tar.bz2'
-  sha1 'df5867e37a4b51fb69f53a8baf5b994938691d6d'
+  url 'http://protobuf.googlecode.com/files/protobuf-2.5.0.tar.bz2'
+  sha1 '62c10dcdac4b69cc8c6bb19f73db40c264cb2726'
+
+  option :universal
 
   fails_with :llvm do
     build 2334
-  end
-
-  def options
-    [['--universal', 'Do a universal build']]
   end
 
   def install
@@ -18,7 +16,7 @@ class Protobuf < Formula
     # https://github.com/mxcl/homebrew/issues/9279
     # http://code.google.com/p/protobuf/source/browse/trunk/configure.ac#61
     ENV.prepend 'CXXFLAGS', '-DNDEBUG'
-    ENV.universal_binary if ARGV.build_universal?
+    ENV.universal_binary if build.universal?
     system "./configure", "--disable-debug", "--disable-dependency-tracking",
                           "--prefix=#{prefix}",
                           "--with-zlib"
@@ -31,7 +29,7 @@ class Protobuf < Formula
 
   def caveats; <<-EOS.undent
     Editor support and examples have been installed to:
-      #{doc}/protobuf
+      #{doc}
     EOS
   end
 end

@@ -1,44 +1,40 @@
 require 'formula'
 
-def build_gui?
-  ARGV.include? '--with-gui'
-end
-
 class Postgis < Formula
-  homepage 'http://postgis.refractions.net'
-  url 'http://postgis.org/download/postgis-2.0.0.tar.gz'
-  md5 '639d2b5d6a7dc94ea2e60d6942a615bc'
+  homepage 'http://postgis.net'
+  url 'http://download.osgeo.org/postgis/source/postgis-2.0.3.tar.gz'
+  sha1 '825c1718cf2603fa0f1c2de802989dff7239f9bc'
 
   head 'http://svn.osgeo.org/postgis/trunk/'
 
+  option 'with-gui', 'Build shp2pgsql-gui in addition to command line tools'
+
+  depends_on :automake
+  depends_on :libtool
+
+  depends_on 'gpp' => :build
   depends_on 'postgresql'
   depends_on 'proj'
   depends_on 'geos'
 
-  depends_on 'gtk+' if build_gui?
+  depends_on 'gtk+' if build.include? 'with-gui'
 
   # For GeoJSON and raster handling
   depends_on 'json-c'
   depends_on 'gdal'
 
-  if ARGV.build_head? and MacOS.xcode_version >= "4.3"
-    depends_on "automake" => :build
-    depends_on "libtool" => :build
+  def postgresql
+    # Follow the PostgreSQL linked keg back to the active Postgres installation
+    # as it is common for people to avoid upgrading Postgres.
+    Formula.factory('postgresql').linked_keg.realpath
   end
 
-  def options
-    [
-      ['--with-gui', 'Build shp2pgsql-gui in addition to command line tools']
-    ]
-  end
-
-  # PostGIS command line tools intentionally have unused symbols in
-  # them---these are callbacks for liblwgeom.
-  skip_clean :all
+  # Force GPP to be used when pre-processing SQL files. See:
+  #   http://trac.osgeo.org/postgis/ticket/1694
+  def patches; DATA end
 
   def install
     ENV.deparallelize
-    postgresql = Formula.factory 'postgresql'
     jsonc   = Formula.factory 'json-c'
 
     args = [
@@ -46,21 +42,21 @@ class Postgis < Formula
       # Can't use --prefix, PostGIS disrespects it and flat-out refuses to
       # accept it with 2.0.
       "--with-projdir=#{HOMEBREW_PREFIX}",
-      "--with-jsondir=#{jsonc.prefix}",
+      "--with-jsondir=#{jsonc.linked_keg.realpath}",
       # This is against Homebrew guidelines, but we have to do it as the
       # PostGIS plugin libraries can only be properly inserted into Homebrew's
       # Postgresql keg.
-      "--with-pgconfig=#{postgresql.bin}/pg_config",
+      "--with-pgconfig=#{postgresql}/bin/pg_config",
       # Unfortunately, NLS support causes all kinds of headaches because
       # PostGIS gets all of it's compiler flags from the PGXS makefiles. This
       # makes it nigh impossible to tell the buildsystem where our keg-only
       # gettext installations are.
       "--disable-nls"
     ]
-    args << '--with-gui' if build_gui?
+    args << '--with-gui' if build.include? 'with-gui'
 
 
-    system './autogen.sh' if ARGV.build_head?
+    system './autogen.sh'
     system './configure', *args
     system 'make'
 
@@ -75,11 +71,11 @@ class Postgis < Formula
     # Install PostGIS plugin libraries into the Postgres keg so that they can
     # be loaded and so PostGIS databases will continue to function even if
     # PostGIS is removed.
-    postgresql.lib.install Dir['stage/**/*.so']
+    (postgresql/'lib').install Dir['stage/**/*.so']
 
     # Install extension scripts to the Postgres keg.
     # `CREATE EXTENSION postgis;` won't work if these are located elsewhere.
-    (postgresql.share + 'postgresql' + 'extension').install Dir['stage/**/extension/*']
+    (postgresql/'share/postgresql/extension').install Dir['stage/**/extension/*']
 
     bin.install Dir['stage/**/bin/*']
     lib.install Dir['stage/**/lib/*']
@@ -104,20 +100,45 @@ class Postgis < Formula
   end
 
   def caveats;
-    postgresql = Formula.factory 'postgresql'
-
     <<-EOS.undent
       To create a spatially-enabled database, see the documentation:
-        http://postgis.refractions.net/documentation/manual-1.5/ch02.html#id2630392
+        http://postgis.refractions.net/documentation/manual-2.0/postgis_installation.html#create_new_db_extensions
       and to upgrade your existing spatial databases, see here:
-        http://postgis.refractions.net/documentation/manual-1.5/ch02.html#upgrading
+        http://postgis.refractions.net/documentation/manual-2.0/postgis_installation.html#upgrading
 
       PostGIS SQL scripts installed to:
         #{HOMEBREW_PREFIX}/share/postgis
       PostGIS plugin libraries installed to:
-        #{postgresql.lib}
+        #{postgresql}/lib
       PostGIS extension modules installed to:
-        #{postgresql.share}/postgresql/extension
-    EOS
+        #{postgresql}/share/postgresql/extension
+      EOS
   end
 end
+__END__
+Force usage of GPP as the SQL pre-processor as Clang chokes.
+
+diff --git a/configure.ac b/configure.ac
+index 136a1d6..c953c69 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -31,17 +31,8 @@ AC_SUBST([ANT])
+ dnl
+ dnl SQL Preprocessor
+ dnl
+-AC_PATH_PROG([CPPBIN], [cpp], [])
+-if test "x$CPPBIN" != "x"; then
+-  SQLPP="${CPPBIN} -traditional-cpp -P"
+-else
+-  AC_PATH_PROG([GPP], [gpp_], [])
+-  if test "x$GPP" != "x"; then
+-    SQLPP="${GPP} -C -s \'" dnl Use better string support
+-  else
+-    SQLPP="${CPP} -traditional-cpp"
+-  fi
+-fi
++AC_PATH_PROG([GPP], [gpp], [])
++SQLPP="${GPP} -C -s \'" dnl Use better string support
+ AC_SUBST([SQLPP])
+ 
+ dnl
