@@ -81,7 +81,7 @@ class FormulaInstaller
     unless ignore_deps
       # HACK: If readline is present in the dependency tree, it will clash
       # with the stdlib's Readline module when the debugger is loaded
-      if f.recursive_deps.any? { |d| d.name == "readline" } and ARGV.debug?
+      if f.recursive_dependencies.any? { |d| d.name == "readline" } and ARGV.debug?
         ENV['HOMEBREW_NO_READLINE'] = '1'
       end
 
@@ -406,8 +406,8 @@ class FormulaInstaller
   end
 
   def pour
-    fetched, downloader = f.fetch
-    f.verify_download_integrity fetched unless downloader.local_bottle_path
+    fetched, downloader = f.fetch, f.downloader
+    f.verify_download_integrity(fetched) unless downloader.local_bottle_path
     HOMEBREW_CELLAR.cd do
       downloader.stage
     end
