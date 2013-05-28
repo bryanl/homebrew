@@ -8,9 +8,9 @@ end
 
 class AndroidSdk < Formula
   homepage 'http://developer.android.com/index.html'
-  url 'http://dl.google.com/android/android-sdk_r22-macosx.zip'
+  url 'http://dl.google.com/android/android-sdk_r22.0.1-macosx.zip'
   version 'r22'
-  sha1 '617686fe873585474bdebbb5a8cb73cf7f4e2105'
+  sha1 '59365847b63792cafc3c3d8134c6392c86f9bf72'
 
   # TODO docs and platform-tools
   # See the long comment below for the associated problems
